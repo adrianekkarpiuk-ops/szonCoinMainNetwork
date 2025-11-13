@@ -644,8 +644,7 @@
         class SzonCoinSupabaseBackend {
             constructor() {
                 this.checkConnection();
-                 this.backend = new SzonCoinSupabaseBackend();
-                   this.currentUser = null;
+                this.currentUser = null;
                 this.isMining = false;
                 this.miningType = null;
                 this.currentHashrate = 0;
@@ -661,20 +660,30 @@
           async checkConnection() {
     try {
         console.log("🔍 Sprawdzam połączenie z Supabase...");
-        const { data, error } = await supabase.from('blocks').select('count');
+        console.log("📡 URL:", SUPABASE_URL);
+        
+        // Test prostszym zapytaniem
+        const { data, error } = await supabase.from('users').select('count').limit(1);
         
         if (error) {
-            console.error("❌ Błąd Supabase:", error);
-            throw error;
+            console.error("❌ Błąd połączenia z Supabase:", error);
+            console.error("💡 Sprawdź:");
+            console.error("1. Czy URL i klucz są poprawne");
+            console.error("2. Czy tabele istnieją w Supabase");
+            console.error("3. Czy RLS pozwala na odczyt");
+            
+            document.getElementById('server-status').className = 'server-status offline';
+            document.getElementById('server-status').textContent = '🔴 Błąd połączenia';
+            return;
         }
         
         console.log("✅ Połączenie z Supabase działa!");
         document.getElementById('server-status').className = 'server-status online';
         document.getElementById('server-status').textContent = '🟢 Online';
     } catch (error) {
-        console.error("❌ Błąd połączenia:", error);
+        console.error("💥 Krytyczny błąd połączenia:", error);
         document.getElementById('server-status').className = 'server-status offline';
-        document.getElementById('server-status').textContent = '🔴 Offline - Sprawdź konfigurację Supabase';
+        document.getElementById('server-status').textContent = '🔴 Błąd konfiguracji';
     }
 }
             
@@ -1322,8 +1331,7 @@
                 }
             }
             
-async startCPUMining() {
-   async startCPUMining() {
+  async startCPUMining() {
     if (!this.currentUser) return;
     
     this.isMining = true;
@@ -1357,6 +1365,7 @@ async startGPUMining() {
     this.isMining = true;
     this.miningType = 'gpu';
     this.currentHashrate = 200000;
+    this.lastMineTime = Date.now(); // DODAJ TEŻ TUTAJ
     
     await this.backend.startMining(this.currentUser.address, this.currentHashrate);
     
@@ -1366,6 +1375,7 @@ async startGPUMining() {
     
     // UŻYCIE GPU - DODAJ TEŻ HASHRATE
     this.gpuUsageInterval = setInterval(() => {
+        if (!this.isMining) return; // DODAJ ZABEZPIECZENIE
         const usage = 75 + Math.random() * 15; // 75-90%
         document.getElementById('gpu-usage').textContent = Math.round(usage) + '%';
         document.getElementById('gpu-power').textContent = this.currentHashrate.toLocaleString() + ' H/s'; // DODAJ TE LINIJKĘ
@@ -1606,6 +1616,7 @@ async mineBlock() {
 </body>
 
 </html>
+
 
 
 
