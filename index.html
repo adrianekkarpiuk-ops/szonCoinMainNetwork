@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SzonCoin (szC) - Kryptowaluta Proof-of-Work</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary-color: #00ff9d;
+            --secondary-color: #00b8ff;
+            --background-color: #0a0a0a;
+            --card-bg: #111111;
+            --text-color: #ffffff;
+            --border-color: #1a1a1a;
+            --success-color: #00ff9d;
+            --warning-color: #ffcc00;
+            --error-color: #ff4444;
+            --gpu-color: #ff00ff;
+            --cpu-color: #00b8ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Courier New', monospace;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .tagline {
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+            text-shadow: 0 0 5px var(--secondary-color);
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 0 10px rgba(0, 255, 157, 0.1);
+        }
+
+        .card h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--secondary-color);
+        }
+
+        input, textarea, button, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: var(--text-color);
+            font-size: 1rem;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        button {
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: var(--background-color);
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            box-shadow: 0 0 15px var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #ff4444, #ff8800);
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #ffcc00, #ff8800);
+        }
+
+        .btn-gpu {
+            background: linear-gradient(45deg, var(--gpu-color), #ff00aa);
+        }
+
+        .btn-cpu {
+            background: linear-gradient(45deg, var(--cpu-color), #0088ff);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .wallet-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .address {
+            font-family: monospace;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 8px;
+            border-radius: 4px;
+            word-break: break-all;
+        }
+
+        .balance {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .mining-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--secondary-color);
+        }
+
+        .progress-bar {
+            height: 10px;
+            background-color: var(--border-color);
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .transaction-list, .block-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .transaction, .block {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .transaction:last-child, .block:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-amount {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .transaction-recipient {
+            color: var(--secondary-color);
+        }
+
+        .block-number {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .block-hash {
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: var(--secondary-color);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            color: var(--text-color);
+            z-index: 1000;
+            max-width: 300px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            background-color: rgba(0, 255, 157, 0.2);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .notification.error {
+            background-color: rgba(255, 68, 68, 0.2);
+            border-left: 4px solid var(--error-color);
+        }
+
+        .notification.warning {
+            background-color: rgba(255, 204, 0, 0.2);
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            flex-wrap: wrap;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+
+        .tab.active {
+            border-bottom: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .mining-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .mining-controls button {
+            flex: 1;
+        }
+
+        .hardware-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .hardware-card {
+            padding: 15px;
+            border-radius: 8px;
+            background-color: rgba(0, 0, 0, 0.3);
+        }
+
+        .hardware-card.cpu {
+            border-left: 4px solid var(--cpu-color);
+        }
+
+        .hardware-card.gpu {
+            border-left: 4px solid var(--gpu-color);
+        }
+
+        .hardware-card h3 {
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+
+        .hardware-card.active {
+            box-shadow: 0 0 10px;
+        }
+
+        .hardware-card.cpu.active {
+            box-shadow: 0 0 10px var(--cpu-color);
+        }
+
+        .hardware-card.gpu.active {
+            box-shadow: 0 0 10px var(--gpu-color);
+        }
+
+        .hash-display {
+            font-family: monospace;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            word-break: break-all;
+        }
+
+        .performance-meter {
+            height: 20px;
+            background-color: var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .performance-fill {
+            height: 100%;
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .cpu-fill {
+            background: linear-gradient(90deg, var(--cpu-color), #00aaff);
+        }
+
+        .gpu-fill {
+            background: linear-gradient(90deg, var(--gpu-color), #ff00aa);
+        }
+
+        .performance-label {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .miners-list {
+            margin-top: 15px;
+        }
+
+        .miner-item {
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .miner-item:last-child {
+            border-bottom: none;
+        }
+
+        .miner-chance {
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+
+        .server-status {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: var(--card-bg);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .server-status.online {
+            color: var(--success-color);
+        }
+
+        .server-status.offline {
+            color: var(--error-color);
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .wallet-info {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .balance {
+                margin-top: 10px;
+            }
+            
+            .hardware-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .mining-controls {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="server-status" id="server-status">🔴 Offline</div>
+    
+    <div class="container">
+        <header>
+            <h1>SzonCoin (szC)</h1>
+            <p class="tagline">Kryptowaluta Proof-of-Work z Supabase Backend</p>
+        </header>
+
+        <div id="auth-section" class="card">
+            <h2>Autoryzacja</h2>
+            <div class="tabs">
+                <div class="tab active" data-tab="login">Logowanie</div>
+                <div class="tab" data-tab="register">Rejestracja</div>
+            </div>
+            
+            <div class="tab-content active" id="login-tab">
+                <div class="form-group">
+                    <label for="login-seed">Seed Phrase (12 słów)</label>
+                    <textarea id="login-seed" placeholder="Wprowadź 12 słów seed phrase"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Hasło (opcjonalne)</label>
+                    <input type="password" id="login-password" placeholder="Jeśli ustawiłeś hasło">
+                </div>
+                <button id="login-btn">Zaloguj się</button>
+            </div>
+            
+            <div class="tab-content" id="register-tab">
+                <div class="form-group">
+                    <label>Twój nowy Seed Phrase zostanie wygenerowany po rejestracji</label>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Hasło (opcjonalne)</label>
+                    <input type="password" id="register-password" placeholder="Ustaw hasło do portfela">
+                </div>
+                <button id="register-btn">Zarejestruj się</button>
+                <div id="registration-result" style="display: none; margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 4px;">
+                    <p><strong>ZAPISZ SWÓJ SEED PHRASE!</strong></p>
+                    <textarea id="result-seed" readonly style="background: rgba(0,0,0,0.5); color: var(--success-color); font-weight: bold;"></textarea>
+                    <p>Adres: <span id="result-address" class="address"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <div id="wallet-section" class="card" style="display: none;">
+            <h2>Twój Portfel SzonCoin</h2>
+            <div class="wallet-info">
+                <div>
+                    <label>Adres:</label>
+                    <div class="address" id="wallet-address"></div>
+                </div>
+                <div>
+                    <label>Saldo:</label>
+                    <div class="balance" id="wallet-balance">0 szC</div>
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="send">Wyślij</div>
+                <div class="tab" data-tab="transactions">Transakcje</div>
+                <div class="tab" data-tab="blocks">Bloki</div>
+                <div class="tab" data-tab="mining">Kopanie</div>
+                <div class="tab" data-tab="settings">Ustawienia</div>
+            </div>
+            
+            <div class="tab-content active" id="send-tab">
+                <h3>Wyślij SzonCoin</h3>
+                <div class="form-group">
+                    <label for="recipient-address">Adres odbiorcy</label>
+                    <input type="text" id="recipient-address" placeholder="SzonC...">
+                </div>
+                <div class="form-group">
+                    <label for="send-amount">Kwota (szC)</label>
+                    <input type="number" id="send-amount" min="0.001" step="0.001">
+                </div>
+                <div class="form-group">
+                    <label for="send-seed">Potwierdź Seed Phrase</label>
+                    <textarea id="send-seed" placeholder="Wprowadź swój seed phrase aby potwierdzić transakcję"></textarea>
+                </div>
+                <button id="send-btn">Wyślij</button>
+            </div>
+            
+            <div class="tab-content" id="transactions-tab">
+                <h3>Historia Transakcji</h3>
+                <div class="transaction-list" id="transaction-list">
+                    <!-- Transakcje będą dodawane dynamicznie -->
+                </div>
+            </div>
+            
+            <div class="tab-content" id="blocks-tab">
+                <h3>Ostatnie Bloki</h3>
+                <div class="block-list" id="block-list">
+                    <!-- Bloki będą dodawane dynamicznie -->
+                </div>
+            </div>
+            
+            <div class="tab-content" id="mining-tab">
+                <h3>Kopanie SzonCoin</h3>
+                
+                <div class="hardware-stats">
+                    <div class="hardware-card cpu" id="cpu-card">
+                        <h3>🔧 Kopanie CPU</h3>
+                        <div class="performance-meter">
+                            <div class="performance-fill cpu-fill" id="cpu-performance"></div>
+                            <div class="performance-label" id="cpu-performance-label">0%</div>
+                        </div>
+                        <div>Moc: <span id="cpu-power">0 H/s</span></div>
+                        <div>Wykorzystanie: <span id="cpu-usage">0%</span></div>
+                    </div>
+                    
+                    <div class="hardware-card gpu" id="gpu-card">
+                        <h3>🚀 Kopanie GPU</h3>
+                        <div class="performance-meter">
+                            <div class="performance-fill gpu-fill" id="gpu-performance"></div>
+                            <div class="performance-label" id="gpu-performance-label">0%</div>
+                        </div>
+                        <div>Moc: <span id="gpu-power">0 H/s</span></div>
+                        <div>Wykorzystanie: <span id="gpu-usage">0%</span></div>
+                    </div>
+                </div>
+                
+                <div class="mining-controls">
+                    <button id="cpu-mining-btn" class="btn-cpu">Kopanie CPU</button>
+                    <button id="gpu-mining-btn" class="btn-gpu">Kopanie GPU</button>
+                    <button id="stop-mining-btn" class="btn-danger" style="display: none;">Zatrzymaj Kopanie</button>
+                </div>
+                
+                <div class="mining-stats">
+                    <div class="stat">
+                        <div class="stat-value" id="current-hash-rate">0 H/s</div>
+                        <div class="stat-label">Twoja moc</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="total-miners">0</div>
+                        <div class="stat-label">Kopaczy online</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="your-chance">0%</div>
+                        <div class="stat-label">Twoje szanse</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="mining-reward">10 szC</div>
+                        <div class="stat-label">Nagroda za blok</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Twoje szanse na wygraną:</label>
+                    <div class="progress-bar">
+                        <div class="progress" id="chance-progress"></div>
+                    </div>
+                </div>
+                
+                <div class="miners-list" id="miners-list">
+                    <h4>Aktywni kopacze:</h4>
+                    <!-- Lista kopaczy -->
+                </div>
+            </div>
+            
+            <div class="tab-content" id="settings-tab">
+                <h3>Ustawienia Portfela</h3>
+                <div class="form-group">
+                    <label for="new-password">Nowe hasło (opcjonalne)</label>
+                    <input type="password" id="new-password" placeholder="Zostaw puste, aby usunąć hasło">
+                </div>
+                <button id="update-password-btn">Zaktualizuj hasło</button>
+                
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                    <button id="logout-btn" class="btn-warning">Wyloguj się</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // KONFIGURACJA SUPABASE - ZASTĄP TYM SWOIMI DANYMI!
+        const SUPABASE_URL = 'https://scdxykhbtypebpfxfywt.supabase.co';  // Zastąp swoim URL
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjZHh5a2hidHlwZWJwZnhmeXd0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjMwMjgxNjYsImV4cCI6MjA3ODYwNDE2Nn0.zgohcwhGs6a-07xoIXj4U1BszE-STvoF9Jin_hPTibc';  // Zastąp swoim kluczem
+
+        // Inicjalizacja Supabase
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        class SzonCoinSupabaseBackend {
+            constructor() {
+                this.checkConnection();
+            }
+            
+            async checkConnection() {
+                try {
+                    const { data, error } = await supabase.from('blocks').select('count');
+                    if (error) throw error;
+                    document.getElementById('server-status').className = 'server-status online';
+                    document.getElementById('server-status').textContent = '🟢 Online';
+                } catch (error) {
+                    document.getElementById('server-status').className = 'server-status offline';
+                    document.getElementById('server-status').textContent = '🔴 Offline - Sprawdź konfigurację Supabase';
+                    console.error('Błąd połączenia z Supabase:', error);
+                }
+            }
+            
+            generateSeedPhrase() {
+                const words = [
+                    "abandon", "ability", "able", "about", "above", "absent", "absorb", "abstract", 
+                    "absurd", "abuse", "access", "accident", "account", "accuse", "achieve", "acid",
+                    "acoustic", "acquire", "across", "act", "action", "actor", "actress", "actual",
+                    "adapt", "add", "addict", "address", "adjust", "admit", "adult", "advance"
+                ];
+                
+                let seed = [];
+                for (let i = 0; i < 12; i++) {
+                    const randomIndex = Math.floor(Math.random() * words.length);
+                    seed.push(words[randomIndex]);
+                }
+                
+                return seed.join(' ');
+            }
+            
+            generateAddress(seed) {
+                let hash = 0;
+                for (let i = 0; i < seed.length; i++) {
+                    const char = seed.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash;
+                }
+                
+                const hexHash = Math.abs(hash).toString(16).padStart(12, '0').toUpperCase();
+                return "SzonC" + hexHash;
+            }
+            
+            async register(password = null) {
+                const seed = this.generateSeedPhrase();
+                const address = this.generateAddress(seed);
+                
+                // Sprawdź czy użytkownik już istnieje
+                const { data: existingUser } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('address', address)
+                    .single();
+                
+                if (existingUser) {
+                    return this.register(password); // Rekurencyjnie generuj nowy
+                }
+                
+                // Utwórz nowego użytkownika
+                const { data, error } = await supabase
+                    .from('users')
+                    .insert([
+                        {
+                            address: address,
+                            seed: seed,
+                            password: password,
+                            balance: 0,
+                            created_at: new Date().toISOString()
+                        }
+                    ])
+                    .select()
+                    .single();
+                
+                if (error) {
+                    return { success: false, message: error.message };
+                }
+                
+                return {
+                    success: true,
+                    seed: seed,
+                    address: address
+                };
+            }
+            
+            async login(seed, password = null) {
+                const { data: user, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('seed', seed)
+                    .single();
+                
+                if (error || !user) {
+                    return { success: false, message: "Nieprawidłowy seed phrase" };
+                }
+                
+                // Sprawdź hasło
+                if (user.password && user.password !== password) {
+                    return { success: false, message: "Nieprawidłowe hasło" };
+                }
+                
+                return {
+                    success: true,
+                    address: user.address,
+                    balance: user.balance
+                };
+            }
+            
+            async updatePassword(seed, newPassword) {
+                const { error } = await supabase
+                    .from('users')
+                    .update({ password: newPassword })
+                    .eq('seed', seed);
+                
+                if (error) {
+                    return { success: false, message: error.message };
+                }
+                
+                return { success: true, message: "Hasło zostało zaktualizowane" };
+            }
+            
+            async getWallet(address) {
+                const { data: user, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('address', address)
+                    .single();
+                
+                if (error || !user) {
+                    return { success: false, message: "Adres nie istnieje" };
+                }
+                
+                // Pobierz transakcje użytkownika
+                const { data: transactions } = await supabase
+                    .from('transactions')
+                    .select('*')
+                    .or(`from_address.eq.${address},to_address.eq.${address}`)
+                    .order('timestamp', { ascending: false });
+                
+                return {
+                    success: true,
+                    address: user.address,
+                    balance: user.balance,
+                    transactions: transactions || []
+                };
+            }
+            
+            async sendTransaction(from, to, amount, seed) {
+                // Sprawdź seed phrase
+                const { data: sender } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('address', from)
+                    .eq('seed', seed)
+                    .single();
+                
+                if (!sender) {
+                    return { success: false, message: "Nieprawidłowy seed phrase" };
+                }
+                
+                if (sender.balance < amount) {
+                    return { success: false, message: "Niewystarczające środki" };
+                }
+                
+                // Sprawdź czy odbiorca istnieje, jeśli nie - utwórz
+                const { data: receiver } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('address', to)
+                    .single();
+                
+                if (!receiver) {
+                    await supabase
+                        .from('users')
+                        .insert([
+                            {
+                                address: to,
+                                seed: '',
+                                password: null,
+                                balance: 0,
+                                created_at: new Date().toISOString()
+                            }
+                        ]);
+                }
+                
+                // Utwórz transakcję
+                const transaction = {
+                    from_address: from,
+                    to_address: to,
+                    amount: amount,
+                    timestamp: new Date().toISOString(),
+                    id: 'tx_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+                };
+                
+                const { error } = await supabase
+                    .from('pending_transactions')
+                    .insert([transaction]);
+                
+                if (error) {
+                    return { success: false, message: error.message };
+                }
+                
+                return {
+                    success: true,
+                    message: "Transakcja utworzona",
+                    transaction: transaction
+                };
+            }
+            
+            async startMining(address, hashrate) {
+                const { error } = await supabase
+                    .from('miners')
+                    .upsert([
+                        {
+                            address: address,
+                            hashrate: hashrate,
+                            last_active: new Date().toISOString()
+                        }
+                    ]);
+                
+                if (error) {
+                    return { success: false, message: error.message };
+                }
+                
+                return { success: true, message: "Kopanie rozpoczęte" };
+            }
+            
+            async stopMining(address) {
+                const { error } = await supabase
+                    .from('miners')
+                    .delete()
+                    .eq('address', address);
+                
+                if (error) {
+                    return { success: false, message: error.message };
+                }
+                
+                return { success: true, message: "Kopanie zatrzymane" };
+            }
+            
+            async getMiningStats() {
+                const { data: miners } = await supabase
+                    .from('miners')
+                    .select('*');
+                
+                const totalHashrate = miners ? miners.reduce((sum, miner) => sum + miner.hashrate, 0) : 0;
+                
+                const minerChances = {};
+                if (miners) {
+                    miners.forEach(miner => {
+                        minerChances[miner.address] = totalHashrate > 0 ? (miner.hashrate / totalHashrate) * 100 : 0;
+                    });
+                }
+                
+                return {
+                    success: true,
+                    totalMiners: miners ? miners.length : 0,
+                    totalHashrate: totalHashrate,
+                    minerChances: minerChances,
+                    miners: miners || []
+                };
+            }
+            
+            async mineBlock() {
+                const { data: miners } = await supabase
+                    .from('miners')
+                    .select('*');
+                
+                if (!miners || miners.length === 0) {
+                    return { success: false, message: "Brak aktywnych kopaczy" };
+                }
+                
+                const totalHashrate = miners.reduce((sum, miner) => sum + miner.hashrate, 0);
+                const random = Math.random() * totalHashrate;
+                let current = 0;
+                let winner = null;
+                
+                for (const miner of miners) {
+                    current += miner.hashrate;
+                    if (random <= current) {
+                        winner = miner.address;
+                        break;
+                    }
+                }
+                
+                if (!winner) {
+                    winner = miners[0].address;
+                }
+                
+                // Pobierz oczekujące transakcje
+                const { data: pendingTransactions } = await supabase
+                    .from('pending_transactions')
+                    .select('*');
+                
+                // Pobierz ostatni blok
+                const { data: blocks } = await supabase
+                    .from('blocks')
+                    .select('*')
+                    .order('index', { ascending: false })
+                    .limit(1);
+                
+                const previousBlock = blocks && blocks.length > 0 ? blocks[0] : null;
+                const newBlockIndex = previousBlock ? previousBlock.index + 1 : 1;
+                const blockReward = 10;
+                
+                // Utwórz nowy blok
+                const newBlock = {
+                    index: newBlockIndex,
+                    timestamp: new Date().toISOString(),
+                    previousHash: previousBlock ? previousBlock.hash : "0",
+                    transactions: pendingTransactions || [],
+                    miner: winner,
+                    reward: blockReward,
+                    nonce: 0,
+                    hash: this.calculateBlockHash({
+                        index: newBlockIndex,
+                        timestamp: new Date().toISOString(),
+                        previousHash: previousBlock ? previousBlock.hash : "0",
+                        transactions: pendingTransactions || [],
+                        miner: winner,
+                        reward: blockReward,
+                        nonce: 0
+                    })
+                };
+                
+                // Zapisz blok
+                const { error: blockError } = await supabase
+                    .from('blocks')
+                    .insert([newBlock]);
+                
+                if (blockError) {
+                    return { success: false, message: blockError.message };
+                }
+                
+                // Zaktualizuj saldo zwycięzcy
+                const { data: winnerUser } = await supabase
+                    .from('users')
+                    .select('balance')
+                    .eq('address', winner)
+                    .single();
+                
+                await supabase
+                    .from('users')
+                    .update({ balance: (winnerUser?.balance || 0) + blockReward })
+                    .eq('address', winner);
+                
+                // Przetwórz transakcje
+                if (pendingTransactions && pendingTransactions.length > 0) {
+                    for (const tx of pendingTransactions) {
+                        // Odejmij od nadawcy
+                        const { data: sender } = await supabase
+                            .from('users')
+                            .select('balance')
+                            .eq('address', tx.from_address)
+                            .single();
+                        
+                        if (sender) {
+                            await supabase
+                                .from('users')
+                                .update({ balance: sender.balance - tx.amount })
+                                .eq('address', tx.from_address);
+                        }
+                        
+                        // Dodaj do odbiorcy
+                        const { data: receiver } = await supabase
+                            .from('users')
+                            .select('balance')
+                            .eq('address', tx.to_address)
+                            .single();
+                        
+                        if (receiver) {
+                            await supabase
+                                .from('users')
+                                .update({ balance: receiver.balance + tx.amount })
+                                .eq('address', tx.to_address);
+                        }
+                        
+                        // Przenieś do historii transakcji
+                        await supabase
+                            .from('transactions')
+                            .insert([{
+                                id: tx.id,
+                                from_address: tx.from_address,
+                                to_address: tx.to_address,
+                                amount: tx.amount,
+                                timestamp: tx.timestamp
+                            }]);
+                    }
+                    
+                    // Wyczyść oczekujące transakcje
+                    await supabase
+                        .from('pending_transactions')
+                        .delete()
+                        .in('id', pendingTransactions.map(tx => tx.id));
+                }
+                
+                return {
+                    success: true,
+                    block: newBlock,
+                    winner: winner,
+                    reward: blockReward,
+                    message: `Blok wykopany przez ${winner}`
+                };
+            }
+            
+            async getBlocks(limit = 10) {
+                const { data: blocks } = await supabase
+                    .from('blocks')
+                    .select('*')
+                    .order('index', { ascending: false })
+                    .limit(limit);
+                
+                return {
+                    success: true,
+                    blocks: blocks || []
+                };
+            }
+            
+            calculateBlockHash(block) {
+                const blockString = JSON.stringify({
+                    index: block.index,
+                    timestamp: block.timestamp,
+                    previousHash: block.previousHash,
+                    transactions: block.transactions,
+                    miner: block.miner,
+                    reward: block.reward,
+                    nonce: block.nonce
+                });
+                
+                let hash = 0;
+                for (let i = 0; i < blockString.length; i++) {
+                    const char = blockString.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash;
+                }
+                
+                return Math.abs(hash).toString(16).padStart(64, '0');
+            }
+        }
+
+        // Frontend aplikacji
+        class SzonCoinFrontend {
+            constructor() {
+                this.backend = new SzonCoinSupabaseBackend();
+                this.currentUser = null;
+                this.isMining = false;
+                this.miningType = null;
+                this.currentHashrate = 0;
+                this.statsInterval = null;
+                
+                this.initializeEventListeners();
+                this.checkExistingSession();
+            }
+            
+            initializeEventListeners() {
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        const tabId = tab.getAttribute('data-tab');
+                        this.switchTab(tabId);
+                    });
+                });
+                
+                document.getElementById('login-btn').addEventListener('click', () => {
+                    this.login();
+                });
+                
+                document.getElementById('register-btn').addEventListener('click', () => {
+                    this.register();
+                });
+                
+                document.getElementById('send-btn').addEventListener('click', () => {
+                    this.sendTransaction();
+                });
+                
+                document.getElementById('cpu-mining-btn').addEventListener('click', () => {
+                    this.startCPUMining();
+                });
+                
+                document.getElementById('gpu-mining-btn').addEventListener('click', () => {
+                    this.startGPUMining();
+                });
+                
+                document.getElementById('stop-mining-btn').addEventListener('click', () => {
+                    this.stopMining();
+                });
+                
+                document.getElementById('update-password-btn').addEventListener('click', () => {
+                    this.updatePassword();
+                });
+                
+                document.getElementById('logout-btn').addEventListener('click', () => {
+                    this.logout();
+                });
+            }
+            
+            async login() {
+                const seed = document.getElementById('login-seed').value.trim();
+                const password = document.getElementById('login-password').value;
+                
+                if (!seed) {
+                    this.showNotification('Wprowadź seed phrase', 'error');
+                    return;
+                }
+                
+                const result = await this.backend.login(seed, password);
+                
+                if (result.success) {
+                    this.currentUser = {
+                        address: result.address,
+                        seed: seed,
+                        balance: result.balance
+                    };
+                    
+                    localStorage.setItem('szoncoin_current_user', JSON.stringify(this.currentUser));
+                    
+                    this.showWallet();
+                    this.loadWalletData();
+                    this.showNotification('Zalogowano pomyślnie', 'success');
+                } else {
+                    this.showNotification(result.message, 'error');
+                }
+            }
+            
+            async register() {
+                const password = document.getElementById('register-password').value || null;
+                
+                const result = await this.backend.register(password);
+                
+                if (result.success) {
+                    document.getElementById('registration-result').style.display = 'block';
+                    document.getElementById('result-seed').value = result.seed;
+                    document.getElementById('result-address').textContent = result.address;
+                    
+                    this.showNotification('Zarejestrowano pomyślnie! Zapisz swój seed phrase!', 'success');
+                } else {
+                    this.showNotification(result.message, 'error');
+                }
+            }
+            
+            async loadWalletData() {
+                if (!this.currentUser) return;
+                
+                const result = await this.backend.getWallet(this.currentUser.address);
+                
+                if (result.success) {
+                    document.getElementById('wallet-address').textContent = result.address;
+                    document.getElementById('wallet-balance').textContent = result.balance + ' szC';
+                    this.currentUser.balance = result.balance;
+                    
+                    this.loadTransactions(result.transactions);
+                }
+                
+                this.loadBlocks();
+            }
+            
+            loadTransactions(transactions) {
+                const transactionList = document.getElementById('transaction-list');
+                transactionList.innerHTML = '';
+                
+                if (!transactions || transactions.length === 0) {
+                    transactionList.innerHTML = '<div class="transaction">Brak transakcji</div>';
+                    return;
+                }
+                
+                transactions.forEach(tx => {
+                    const isOutgoing = tx.from_address === this.currentUser.address;
+                    const transactionElement = document.createElement('div');
+                    transactionElement.className = 'transaction';
+                    
+                    transactionElement.innerHTML = `
+                        <div style="display: flex; justify-content: space-between;">
+                            <div>
+                                <span class="transaction-amount">${tx.amount} szC</span>
+                                <span class="transaction-recipient">${isOutgoing ? 'do: ' + tx.to_address : 'od: ' + tx.from_address}</span>
+                            </div>
+                            <div style="color: var(--secondary-color); font-size: 0.8rem;">
+                                ${new Date(tx.timestamp).toLocaleString()}
+                            </div>
+                        </div>
+                    `;
+                    
+                    transactionList.appendChild(transactionElement);
+                });
+            }
+            
+            async loadBlocks() {
+                const result = await this.backend.getBlocks(10);
+                const blockList = document.getElementById('block-list');
+                
+                if (result.success) {
+                    blockList.innerHTML = '';
+                    
+                    result.blocks.forEach(block => {
+                        const blockElement = document.createElement('div');
+                        blockElement.className = 'block';
+                        
+                        blockElement.innerHTML = `
+                            <div class="block-number">Blok #${block.index}</div>
+                            <div class="block-hash">${block.hash.substring(0, 16)}...</div>
+                            <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                                <div style="color: var(--secondary-color); font-size: 0.8rem;">
+                                    Kopacz: ${block.miner}
+                                </div>
+                                <div style="color: var(--secondary-color); font-size: 0.8rem;">
+                                    ${new Date(block.timestamp).toLocaleString()}
+                                </div>
+                            </div>
+                        `;
+                        
+                        blockList.appendChild(blockElement);
+                    });
+                }
+            }
+            
+            async sendTransaction() {
+                if (!this.currentUser) return;
+                
+                const recipient = document.getElementById('recipient-address').value.trim();
+                const amount = parseFloat(document.getElementById('send-amount').value);
+                const seed = document.getElementById('send-seed').value.trim();
+                
+                if (!recipient) {
+                    this.showNotification('Wprowadź adres odbiorcy', 'error');
+                    return;
+                }
+                
+                if (!recipient.startsWith('SzonC')) {
+                    this.showNotification('Adres musi zaczynać się od "SzonC"', 'error');
+                    return;
+                }
+                
+                if (!amount || amount <= 0) {
+                    this.showNotification('Wprowadź poprawną kwotę', 'error');
+                    return;
+                }
+                
+                if (!seed) {
+                    this.showNotification('Potwierdź seed phrase', 'error');
+                    return;
+                }
+                
+                const result = await this.backend.sendTransaction(
+                    this.currentUser.address, 
+                    recipient, 
+                    amount, 
+                    seed
+                );
+                
+                if (result.success) {
+                    this.showNotification('Transakcja utworzona pomyślnie', 'success');
+                    document.getElementById('recipient-address').value = '';
+                    document.getElementById('send-amount').value = '';
+                    document.getElementById('send-seed').value = '';
+                    this.loadWalletData();
+                } else {
+                    this.showNotification(result.message, 'error');
+                }
+            }
+            
+            async startCPUMining() {
+                if (!this.currentUser) return;
+                
+                this.isMining = true;
+                this.miningType = 'cpu';
+                this.currentHashrate = 50000;
+                
+                await this.backend.startMining(this.currentUser.address, this.currentHashrate);
+                
+                document.getElementById('cpu-mining-btn').style.display = 'none';
+                document.getElementById('gpu-mining-btn').style.display = 'none';
+                document.getElementById('stop-mining-btn').style.display = 'block';
+                
+                this.startMiningStats();
+                this.showNotification('Rozpoczęto kopanie CPU', 'success');
+            }
+            
+            async startGPUMining() {
+                if (!this.currentUser) return;
+                
+                this.isMining = true;
+                this.miningType = 'gpu';
+                this.currentHashrate = 200000;
+                
+                await this.backend.startMining(this.currentUser.address, this.currentHashrate);
+                
+                document.getElementById('cpu-mining-btn').style.display = 'none';
+                document.getElementById('gpu-mining-btn').style.display = 'none';
+                document.getElementById('stop-mining-btn').style.display = 'block';
+                
+                this.startMiningStats();
+                this.showNotification('Rozpoczęto kopanie GPU', 'success');
+            }
+            
+            async stopMining() {
+                this.isMining = false;
+                
+                await this.backend.stopMining(this.currentUser.address);
+                
+                document.getElementById('cpu-mining-btn').style.display = 'block';
+                document.getElementById('gpu-mining-btn').style.display = 'block';
+                document.getElementById('stop-mining-btn').style.display = 'none';
+                
+                if (this.statsInterval) {
+                    clearInterval(this.statsInterval);
+                }
+                
+                this.showNotification('Kopanie zatrzymane', 'warning');
+            }
+            
+            startMiningStats() {
+                this.statsInterval = setInterval(async () => {
+                    await this.updateMiningStats();
+                }, 2000);
+            }
+            
+            async updateMiningStats() {
+                const stats = await this.backend.getMiningStats();
+                
+                if (stats.success) {
+                    document.getElementById('current-hash-rate').textContent = this.currentHashrate.toLocaleString() + ' H/s';
+                    document.getElementById('total-miners').textContent = stats.totalMiners;
+                    
+                    const myChance = stats.minerChances[this.currentUser.address] || 0;
+                    document.getElementById('your-chance').textContent = myChance.toFixed(1) + '%';
+                    document.getElementById('chance-progress').style.width = myChance + '%';
+                    
+                    this.updateMinersList(stats.miners, stats.minerChances);
+                    
+                    if (Math.random() < 0.033) {
+                        this.mineBlock();
+                    }
+                }
+            }
+            
+            updateMinersList(miners, chances) {
+                const minersList = document.getElementById('miners-list');
+                minersList.innerHTML = '<h4>Aktywni kopacze:</h4>';
+                
+                if (!miners || miners.length === 0) {
+                    minersList.innerHTML += '<div class="miner-item">Brak aktywnych kopaczy</div>';
+                    return;
+                }
+                
+                miners.forEach(miner => {
+                    const chance = chances[miner.address] || 0;
+                    const isMe = miner.address === this.currentUser.address;
+                    
+                    const minerElement = document.createElement('div');
+                    minerElement.className = 'miner-item';
+                    if (isMe) {
+                        minerElement.style.background = 'rgba(0, 255, 157, 0.1)';
+                    }
+                    
+                    minerElement.innerHTML = `
+                        <div>
+                            ${isMe ? '🟢 ' : '🔵 '} 
+                            ${miner.address.substring(0, 10)}...
+                        </div>
+                        <div>
+                            ${miner.hashrate.toLocaleString()} H/s
+                            <span class="miner-chance">(${chance.toFixed(1)}%)</span>
+                        </div>
+                    `;
+                    
+                    minersList.appendChild(minerElement);
+                });
+            }
+            
+            async mineBlock() {
+                const result = await this.backend.mineBlock();
+                
+                if (result.success && result.winner === this.currentUser.address) {
+                    this.showNotification(`🎉 WYGRAŁEŚ! Wykopałeś blok i otrzymałeś ${result.reward} szC!`, 'success');
+                    this.loadWalletData();
+                    this.loadBlocks();
+                }
+            }
+            
+            async updatePassword() {
+                if (!this.currentUser) return;
+                
+                const newPassword = document.getElementById('new-password').value || null;
+                
+                const result = await this.backend.updatePassword(this.currentUser.seed, newPassword);
+                
+                if (result.success) {
+                    this.showNotification(result.message, 'success');
+                    document.getElementById('new-password').value = '';
+                } else {
+                    this.showNotification(result.message, 'error');
+                }
+            }
+            
+            checkExistingSession() {
+                const savedUser = localStorage.getItem('szoncoin_current_user');
+                if (savedUser) {
+                    this.currentUser = JSON.parse(savedUser);
+                    this.showWallet();
+                    this.loadWalletData();
+                }
+            }
+            
+            showWallet() {
+                document.getElementById('auth-section').style.display = 'none';
+                document.getElementById('wallet-section').style.display = 'block';
+            }
+            
+            switchTab(tabId) {
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                document.querySelector(`.tab[data-tab="${tabId}"]`).classList.add('active');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+                
+                if (tabId === 'transactions') {
+                    this.loadWalletData();
+                } else if (tabId === 'blocks') {
+                    this.loadBlocks();
+                } else if (tabId === 'mining' && this.isMining) {
+                    this.startMiningStats();
+                }
+            }
+            
+            logout() {
+                if (this.isMining) {
+                    this.stopMining();
+                }
+                
+                this.currentUser = null;
+                localStorage.removeItem('szoncoin_current_user');
+                
+                document.getElementById('auth-section').style.display = 'block';
+                document.getElementById('wallet-section').style.display = 'none';
+                
+                document.getElementById('login-seed').value = '';
+                document.getElementById('login-password').value = '';
+                document.getElementById('register-password').value = '';
+                document.getElementById('registration-result').style.display = 'none';
+                
+                this.switchTab('login');
+                
+                this.showNotification('Wylogowano pomyślnie', 'success');
+            }
+            
+            showNotification(message, type) {
+                const notification = document.getElementById('notification');
+                notification.textContent = message;
+                notification.className = `notification ${type}`;
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 5000);
+            }
+        }
+
+        // Inicjalizacja aplikacji
+        document.addEventListener('DOMContentLoaded', () => {
+            window.szonCoinApp = new SzonCoinFrontend();
+        });
+    </script>
+</body>
+</html>
