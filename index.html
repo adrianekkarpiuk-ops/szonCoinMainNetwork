@@ -1366,6 +1366,21 @@ this.gpuUsageInterval = setInterval(() => {
                 
                 this.showNotification('Kopanie zatrzymane', 'warning');
             }
+
+if (this.cpuUsageInterval) {
+    clearInterval(this.cpuUsageInterval);
+}
+if (this.gpuUsageInterval) {
+    clearInterval(this.gpuUsageInterval);
+}
+
+// Zresetuj wskaźniki użycia
+document.getElementById('cpu-usage').textContent = '0%';
+document.getElementById('cpu-performance').style.width = '0%';
+document.getElementById('cpu-performance-label').textContent = '0%';
+document.getElementById('gpu-usage').textContent = '0%';
+document.getElementById('gpu-performance').style.width = '0%';
+document.getElementById('gpu-performance-label').textContent = '0%';
             
             startMiningStats() {
                 this.statsInterval = setInterval(async () => {
@@ -1533,6 +1548,7 @@ this.gpuUsageInterval = setInterval(() => {
 </body>
 
 </html>
+
 
 
 
