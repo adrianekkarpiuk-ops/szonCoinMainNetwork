@@ -646,18 +646,25 @@
                 this.checkConnection();
             }
             
-            async checkConnection() {
-                try {
-                    const { data, error } = await supabase.from('blocks').select('count');
-                    if (error) throw error;
-                    document.getElementById('server-status').className = 'server-status online';
-                    document.getElementById('server-status').textContent = '🟢 Online';
-                } catch (error) {
-                    document.getElementById('server-status').className = 'server-status offline';
-                    document.getElementById('server-status').textContent = '🔴 Offline - Sprawdź konfigurację Supabase';
-                    console.error('Błąd połączenia z Supabase:', error);
-                }
-            }
+          async checkConnection() {
+    try {
+        console.log("🔍 Sprawdzam połączenie z Supabase...");
+        const { data, error } = await supabase.from('blocks').select('count');
+        
+        if (error) {
+            console.error("❌ Błąd Supabase:", error);
+            throw error;
+        }
+        
+        console.log("✅ Połączenie z Supabase działa!");
+        document.getElementById('server-status').className = 'server-status online';
+        document.getElementById('server-status').textContent = '🟢 Online';
+    } catch (error) {
+        console.error("❌ Błąd połączenia:", error);
+        document.getElementById('server-status').className = 'server-status offline';
+        document.getElementById('server-status').textContent = '🔴 Offline - Sprawdź konfigurację Supabase';
+    }
+}
             
             generateSeedPhrase() {
                 const words = [
@@ -1548,6 +1555,7 @@ document.getElementById('gpu-performance-label').textContent = '0%';
 </body>
 
 </html>
+
 
 
 
