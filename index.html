@@ -1316,6 +1316,13 @@
                 document.getElementById('gpu-mining-btn').style.display = 'none';
                 document.getElementById('stop-mining-btn').style.display = 'block';
                 
+                this.cpuUsageInterval = setInterval(() => {
+    const usage = 70 + Math.random() * 20; // 70-90%
+    document.getElementById('cpu-usage').textContent = Math.round(usage) + '%';
+    document.getElementById('cpu-performance').style.width = usage + '%';
+    document.getElementById('cpu-performance-label').textContent = Math.round(usage) + '%';
+}, 1000);
+                
                 this.startMiningStats();
                 this.showNotification('Rozpoczęto kopanie CPU', 'success');
             }
@@ -1332,6 +1339,13 @@
                 document.getElementById('cpu-mining-btn').style.display = 'none';
                 document.getElementById('gpu-mining-btn').style.display = 'none';
                 document.getElementById('stop-mining-btn').style.display = 'block';
+            
+this.gpuUsageInterval = setInterval(() => {
+    const usage = 75 + Math.random() * 15; // 75-90%
+    document.getElementById('gpu-usage').textContent = Math.round(usage) + '%';
+    document.getElementById('gpu-performance').style.width = usage + '%';
+    document.getElementById('gpu-performance-label').textContent = Math.round(usage) + '%';
+}, 1000);
                 
                 this.startMiningStats();
                 this.showNotification('Rozpoczęto kopanie GPU', 'success');
@@ -1519,5 +1533,6 @@
 </body>
 
 </html>
+
 
 
